@@ -3,8 +3,7 @@
  * Theme Hook Alliance hook stub list.
  *
  * @package  themehookalliance
- * @version  1.0-draft
- * @since    1.0-draft
+ * @version  2.0
  * @license  http://www.gnu.org/licenses/old-licenses/gpl-2.0.html GNU General Public License, v2 (or newer)
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,247 +17,248 @@
  * GNU General Public License for more details.
  */
 
-/**
- * Define the version of THA support, in case that becomes useful down the road.
- */
-define( 'THA_HOOKS_VERSION', '1.0-draft' );
+defined( 'ABSPATH' ) or exit; // Exit if accessed directly
 
-/**
- * Themes and Plugins can check for tha_hooks using current_theme_supports( 'tha_hooks', $hook )
- * to determine whether a theme declares itself to support this specific hook type.
- *
- * Example:
- * <code>
- * 		// Declare support for all hook types
- * 		add_theme_support( 'tha_hooks', array( 'all' ) );
- *
- * 		// Declare support for certain hook types only
- * 		add_theme_support( 'tha_hooks', array( 'header', 'content', 'footer' ) );
- * </code>
- */
-add_theme_support( 'tha_hooks', array(
+if( ! class_exists( 'THA' ) ) :
 
-	/**
-	 * As a Theme developer, use the 'all' parameter, to declare support for all
-	 * hook types.
-	 * Please make sure you then actually reference all the hooks in this file,
-	 * Plugin developers depend on it!
-	 */
-	'all',
+    define( 'THA_HOOKS', true );
+    define( 'THA_HOOKS_VERSION', '2.0.0' );
 
-	/**
-	 * Themes can also choose to only support certain hook types.
-	 * Please make sure you then actually reference all the hooks in this type
-	 * family.
-	 *
-	 * When the 'all' parameter was set, specific hook types do not need to be
-	 * added explicitly.
-	 */
-	'html',
-	'body',
-	'head',
-	'header',
-	'content',
-	'entry',
-	'comments',
-	'sidebars',
-	'sidebar',
-	'footer',
+    class THA {
 
-	/**
-	 * If/when WordPress Core implements similar methodology, Themes and Plugins
-	 * will be able to check whether the version of THA supplied by the theme
-	 * supports Core hooks.
-	 */
-	//'core',
-) );
+        /**
+         * An empty constructor. Purposely do nothing here.
+         */
+        public function __construct() {}
 
-/**
- * Determines, whether the specific hook type is actually supported.
- *
- * Plugin developers should always check for the support of a <strong>specific</strong>
- * hook type before hooking a callback function to a hook of this type.
- *
- * Example:
- * <code>
- * 		if ( current_theme_supports( 'tha_hooks', 'header' ) )
- * 	  		add_action( 'tha_head_top', 'prefix_header_top' );
- * </code>
- *
- * @param bool $bool true
- * @param array $args The hook type being checked
- * @param array $registered All registered hook types
- *
- * @return bool
- */
-function tha_current_theme_supports( $bool, $args, $registered ) {
-	return in_array( $args[0], $registered[0] ) || in_array( 'all', $registered[0] );
-}
-add_filter( 'current_theme_supports-tha_hooks', 'tha_current_theme_supports', 10, 3 );
+        /**
+         * Handles initializing this class and returning the singleton instance after it's been cached.
+         *
+         * @return null|THA
+         */
+        public static function get_instance() {
+            // Store the instance locally to avoid private static replication
+            static $instance = null;
 
-/**
- * HTML <html> hook
- * Special case, useful for <DOCTYPE>, etc.
- * $tha_supports[] = 'html;
- */
-function tha_html_before() {
-	do_action( 'tha_html_before' );
-}
-/**
- * HTML <body> hooks
- * $tha_supports[] = 'body';
- */
-function tha_body_top() {
-	do_action( 'tha_body_top' );
-}
+            if( $instance === null ) {
+                $instance = new self();
+                self::_add_actions();
+            }
 
-function tha_body_bottom() {
-	do_action( 'tha_body_bottom' );
-}
+            return $instance;
+        }
 
-/**
- * HTML <head> hooks
- *
- * $tha_supports[] = 'head';
- */
-function tha_head_top() {
-	do_action( 'tha_head_top' );
-}
+        /**
+         * Handles registering hooks that initialize this plugin.
+         */
+        public static function _add_actions() {
+            // Declare add_theme_support
+            self::_setup();
+            // Filter when call for current_theme_support( 'tha_hooks' );
+            add_filter( 'current_theme_supports-tha_hooks', array( __CLASS__, '_current_theme_supports' ), 10, 3 );
+        }
 
-function tha_head_bottom() {
-	do_action( 'tha_head_bottom' );
-}
+        /**
+         * THA Support
+         */
 
-/**
- * Semantic <header> hooks
- *
- * $tha_supports[] = 'header';
- */
-function tha_header_before() {
-	do_action( 'tha_header_before' );
-}
+        /**
+         * Themes and Plugins can check for tha_hooks using current_theme_supports( 'tha_hooks', $hook )
+         * to determine whether a theme declares itself to support this specific hook type.
+         *
+         * On the setup, it supports all standar sections.
+         */
+        public static function _setup() {
+            add_theme_support( 'tha_hooks', array(
+                'html',
+                'body',
+                'head',
+                'header',
+                'content',
+                'primary',
+                'content_while',
+                'entry',
+                'entry_content',
+                'comments',
+                'main_sidebar', //secondary
+                'footer'
+            ) );
+        }
 
-function tha_header_after() {
-	do_action( 'tha_header_after' );
-}
+        /**
+         * Determines, whether the specific hook type is actually supported.
+         *
+         * Plugin developers should always check for the support of a <strong>specific</strong>
+         * hook type before hooking a callback function to a hook of this type.
+         *
+         * Example:
+         * <code>
+         *     if( current_theme_supports( 'tha_hooks', 'head' ) ) {
+         *         add_action( 'tha_head_top', 'fn_header_top' );
+         *     }
+         * </code>
+         *
+         * @param bool $bool true
+         * @param array $args The hook type being checked
+         * @param array $registered All registered hook types
+         *
+         * @return bool
+         */
+        public static function _current_theme_supports( $bool, $args, $registered ) {
+            return in_array( $args[ 0 ], $registered[ 0 ] );
+        }
 
-function tha_header_top() {
-	do_action( 'tha_header_top' );
-}
+        /**
+         * THA Add support
+         *
+         * For the purpose to add new support sections.
+         *
+         * @param string|array $tha_theme_support
+         */
+        public static function add_supports( $tha_theme_support ) {
+            $current_tha_supports = get_theme_support( 'tha_hooks' )[ 0 ];
 
-function tha_header_bottom() {
-	do_action( 'tha_header_bottom' );
-}
+            if( gettype( $tha_theme_support ) === 'array' ) {
+                $current_tha_supports = array_merge( $current_tha_supports, $tha_theme_support );
+            }
+            elseif( ! in_array( $tha_theme_support, $current_tha_supports ) ) {
+                $current_tha_supports[] = $tha_theme_support;
+            }
 
-/**
- * Semantic <content> hooks
- *
- * $tha_supports[] = 'content';
- */
-function tha_content_before() {
-	do_action( 'tha_content_before' );
-}
+            add_theme_support( 'tha_hooks', $current_tha_supports );
+        }
 
-function tha_content_after() {
-	do_action( 'tha_content_after' );
-}
+        /**
+         * THA Add support
+         *
+         * For the purpose to add new support sections.
+         *
+         * @param string|array $tha_theme_support
+         */
+        public static function remove_supports( $tha_theme_support ) {
+            $current_tha_supports = get_theme_support( 'tha_hooks' )[ 0 ];
 
-function tha_content_top() {
-	do_action( 'tha_content_top' );
-}
+            if( gettype( $tha_theme_support ) === 'string' ) { $tha_theme_support = array( $tha_theme_support ); }
 
-function tha_content_bottom() {
-	do_action( 'tha_content_bottom' );
-}
+            for( $i = 0, $len = count( $tha_theme_support ); $i < $len; $i++ ) {
+                if( ( $key = array_search( $tha_theme_support[ 0 ], $current_tha_supports) ) !== false ) {
+                    unset( $current_tha_supports[ $key ] );
+                }
+            }
 
-function tha_content_while_before() {
-	do_action( 'tha_content_while_before' );
-}
+            add_theme_support( 'tha_hooks', $current_tha_supports );
+        }
 
-function tha_content_while_after() {
-	do_action( 'tha_content_while_after' );
-}
+        /**
+         * THA ACTIONS
+         */
 
-/**
- * Semantic <entry> hooks
- *
- * $tha_supports[] = 'entry';
- */
-function tha_entry_before() {
-	do_action( 'tha_entry_before' );
-}
+        /**
+         * custom hook
+         * For non-standar hooks.
+         */
+        public static function custom( $key ) { do_action( "tha_$key" ); }
 
-function tha_entry_after() {
-	do_action( 'tha_entry_after' );
-}
+        /**
+         * HTML <html> hook
+         * Special case, useful for <DOCTYPE>, before to print html checks, etc.
+         * $tha_supports[] = 'html';
+         */
+        public static function html_before() { do_action( 'tha_html_before' ); }
 
-function tha_entry_content_before() {
-	do_action( 'tha_entry_content_before' );
-}
+        /**
+         * HTML <head> hooks
+         * $tha_supports[] = 'head';
+         */
+        public static function head_top()    { do_action( 'tha_head_top'    ); }
+        public static function head_bottom() { do_action( 'tha_head_bottom' ); }
 
-function tha_entry_content_after() {
-	do_action( 'tha_entry_content_after' );
-}
+        /**
+         * HTML <body> hooks
+         * $tha_supports[] = 'body';
+         */
+        public static function body_top()    { do_action( 'tha_body_top'    ); }
+        public static function body_bottom() { do_action( 'tha_body_bottom' ); }
 
-function tha_entry_top() {
-	do_action( 'tha_entry_top' );
-}
+        /**
+         * Semantic <header> hooks
+         * $tha_supports[] = 'header';
+         */
+        public static function header_before() { do_action( 'tha_header_before' ); }
+        public static function header_after()  { do_action( 'tha_header_after'  ); }
+        public static function header_top()    { do_action( 'tha_header_top'    ); }
+        public static function header_bottom() { do_action( 'tha_header_bottom' ); }
 
-function tha_entry_bottom() {
-	do_action( 'tha_entry_bottom' );
-}
+        /**
+         * Semantic <content> hooks
+         * $tha_supports[] = 'content';
+         */
+        public static function content_before()       { do_action( 'tha_content_before'       ); }
+        public static function content_after()        { do_action( 'tha_content_after'        ); }
+        public static function content_top()          { do_action( 'tha_content_top'          ); }
+        public static function content_bottom()       { do_action( 'tha_content_bottom'       ); }
 
-/**
- * Comments block hooks
- *
- * $tha_supports[] = 'comments';
- */
-function tha_comments_before() {
-	do_action( 'tha_comments_before' );
-}
+        /**
+         * Semantic <content> hooks
+         * $tha_supports[] = 'primary';
+         */
+        public static function primary_before()       { do_action( 'tha_primary_before' ); }
+        public static function primary_after()        { do_action( 'tha_primary_after'  ); }
+        public static function primary_top()          { do_action( 'tha_primary_top'    ); }
+        public static function primary_bottom()       { do_action( 'tha_primary_bottom' ); }
 
-function tha_comments_after() {
-	do_action( 'tha_comments_after' );
-}
+        /**
+         * Semantic <content> hooks
+         * $tha_supports[] = 'content_while';
+         */
+        public static function content_while_before() { do_action( 'tha_content_while_before' ); }
+        public static function content_while_after()  { do_action( 'tha_content_while_after'  ); }
 
-/**
- * Semantic <sidebar> hooks
- *
- * $tha_supports[] = 'sidebar';
- */
-function tha_sidebars_before() {
-	do_action( 'tha_sidebars_before' );
-}
+        /**
+         * Semantic <entry> hooks
+         * $tha_supports[] = 'entry';
+         */
+        public static function entry_before()         { do_action( 'tha_entry_before'         ); }
+        public static function entry_after()          { do_action( 'tha_entry_after'          ); }
+        public static function entry_top()            { do_action( 'tha_entry_top'            ); }
+        public static function entry_bottom()         { do_action( 'tha_entry_bottom'         ); }
 
-function tha_sidebars_after() {
-	do_action( 'tha_sidebars_after' );
-}
+        /**
+         * Semantic <entry> hooks
+         * $tha_supports[] = 'entry_content';
+         */
+        public static function entry_content_before() { do_action( 'tha_entry_content_before' ); }
+        public static function entry_content_after()  { do_action( 'tha_entry_content_after'  ); }
+        public static function entry_content_top()    { do_action( 'tha_entry_content_top'    ); }
+        public static function entry_content_bottom() { do_action( 'tha_entry_content_bottom' ); }
 
-function tha_sidebar_top() {
-	do_action( 'tha_sidebar_top' );
-}
+        /**
+         * Comments block hooks
+         * $tha_supports[] = 'comments';
+         */
+        public static function comments_before() { do_action( 'tha_comments_before' ); }
+        public static function comments_after()  { do_action( 'tha_comments_after'  ); }
 
-function tha_sidebar_bottom() {
-	do_action( 'tha_sidebar_bottom' );
-}
+        /**
+         * Semantic <sidebar> hooks
+         * $tha_supports[] = 'main_sidebar';
+         */
+        public static function main_sidebar_before() { do_action( 'tha_main_sidebar_before' ); }
+        public static function main_sidebar_after()  { do_action( 'tha_main_sidebar_after'  ); }
+        public static function main_sidebar_top()    { do_action( 'tha_main_sidebar_top'    ); }
+        public static function main_sidebar_bottom() { do_action( 'tha_main_sidebar_bottom' ); }
 
-/**
- * Semantic <footer> hooks
- *
- * $tha_supports[] = 'footer';
- */
-function tha_footer_before() {
-	do_action( 'tha_footer_before' );
-}
+        /**
+         * Semantic <footer> hooks
+         * $tha_supports[] = 'footer';
+         */
+        public static function footer_before() { do_action( 'tha_footer_before' ); }
+        public static function footer_after()  { do_action( 'tha_footer_after'  ); }
+        public static function footer_top()    { do_action( 'tha_footer_top'    ); }
+        public static function footer_bottom() { do_action( 'tha_footer_bottom' ); }
 
-function tha_footer_after() {
-	do_action( 'tha_footer_after' );
-}
+    }
 
-function tha_footer_top() {
-	do_action( 'tha_footer_top' );
-}
+    THA::get_instance();
 
-function tha_footer_bottom() {
-	do_action( 'tha_footer_bottom' );
-}
+endif;

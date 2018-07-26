@@ -1,16 +1,16 @@
 {
-    "name"       : "zamoose/themehookalliance",
+    "name"       : "oropesa/themehookalliance",
     "description": "Theme Hook Alliance",
     "keywords"   : ["wordpress"],
-    "homepage"   : "https://github.com/zamoose/themehookalliance",
+    "homepage"   : "https://github.com/oropesa/themehookalliance",
     "license"    : "GPL-2.0+",
     "authors"    : [
         {
-            "name"    : "Doug Stewart",
-            "homepage": "http://literalbarrage.org"
+            "name"    : "Carlos Oropesa",
+            "homepage": "https://oropensando.com"
         }
     ],
     "support"    : {
-        "issues": "https://github.com/zamoose/themehookalliance/issues"
+        "issues": "https://github.com/oropesaa/themehookalliance/issues"
     }
 }
